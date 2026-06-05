@@ -1,0 +1,625 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OrdinaryServer — MC.CNPVP.CLUB</title>
+<meta name="description" content="OrdinaryServer — 高性能 PocketMine-MP 5.x PvP 服务器。14种职业，排位ELO系统，极致战斗体验。">
+<style>
+/* === RESET & BASE === */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:#00d4ff22 transparent}
+body{background:#06060d;color:#d4d4dc;font-family:"Segoe UI",system-ui,-apple-system,sans-serif;overflow-x:hidden;line-height:1.6}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#00d4ff22;border-radius:3px}
+::selection{background:#00d4ff44;color:#fff}
+a{color:inherit;text-decoration:none}
+
+/* === CSS VARIABLES === */
+:root{
+  --bg-primary:#06060d;
+  --bg-secondary:#0b0b16;
+  --bg-card:#11111e;
+  --bg-card-hover:#16162a;
+  --border:#1e1e33;
+  --accent:#00d4ff;
+  --accent-glow:#00d4ff66;
+  --accent2:#7c3aed;
+  --accent2-glow:#7c3aed66;
+  --text:#d4d4dc;
+  --text-dim:#6b6b80;
+  --text-bright:#f0f0f5;
+  --danger:#ef4444;
+  --success:#22c55e;
+  --warning:#f59e0b;
+}
+
+/* === PARTICLES CANVAS === */
+#particles{position:fixed;inset:0;pointer-events:none;z-index:0}
+
+/* === NAV === */
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:0 2rem;transition:all .35s ease}
+.nav.scrolled{background:#06060dee;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+.nav-inner{max-width:1280px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:72px}
+.nav-logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.25rem;letter-spacing:-.02em;color:var(--text-bright)}
+.nav-logo .logo-dot{width:10px;height:10px;background:var(--accent);border-radius:50%;box-shadow:0 0 14px var(--accent-glow)}
+.nav-links{display:flex;gap:2rem;list-style:none;align-items:center}
+.nav-links a{font-size:.875rem;font-weight:500;color:var(--text-dim);transition:color .2s;position:relative}
+.nav-links a:hover{color:var(--text-bright)}
+.nav-links a::after{content:"";position:absolute;bottom:-4px;left:0;width:0;height:2px;background:var(--accent);border-radius:1px;transition:width .25s ease}
+.nav-links a:hover::after{width:100%}
+.nav-cta{display:inline-flex;align-items:center;gap:6px;padding:8px 20px;border-radius:9999px;background:var(--accent);color:#000!important;font-weight:700;font-size:.85rem;transition:all .3s;box-shadow:0 0 20px var(--accent-glow)}
+.nav-cta:hover{transform:translateY(-2px);box-shadow:0 0 30px var(--accent),0 6px 20px #00000044}
+.nav-cta::after{display:none!important}
+.mobile-menu-btn{display:none;background:none;border:none;color:var(--text-bright);font-size:1.5rem;cursor:pointer;padding:8px}
+
+/* === HERO === */
+.hero{position:relative;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:6rem 2rem 4rem;overflow:hidden}
+.hero-bg-glow{position:absolute;top:20%;left:50%;transform:translate(-50%,-50%);width:800px;height:800px;background:radial-gradient(circle,var(--accent-glow) 0%,transparent 70%);opacity:.15;pointer-events:none}
+.hero-bg-glow2{position:absolute;bottom:10%;left:30%;width:600px;height:600px;background:radial-gradient(circle,var(--accent2-glow) 0%,transparent 70%);opacity:.1;pointer-events:none}
+.hero-grid{position:absolute;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:60px 60px;mask-image:radial-gradient(ellipse at center,black 30%,transparent 70%);-webkit-mask-image:radial-gradient(ellipse at center,black 30%,transparent 70%);opacity:.4;pointer-events:none}
+.hero-content{position:relative;z-index:1;text-align:center;max-width:900px}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border-radius:9999px;border:1px solid var(--border);background:#ffffff08;font-size:.8rem;color:var(--text-dim);margin-bottom:2rem;animation:fadeInUp .6s ease backwards}
+.hero-badge .pulse{width:8px;height:8px;background:var(--success);border-radius:50%;animation:pulse-dot 2s infinite}
+.hero h1{font-size:clamp(2.5rem,6vw,5rem);font-weight:900;line-height:1.05;letter-spacing:-.03em;margin-bottom:1.25rem;animation:fadeInUp .6s .1s ease backwards}
+.hero h1 .gradient-text{background:linear-gradient(135deg,var(--accent) 0%,#a78bfa 50%,var(--accent) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;background-size:200% auto;animation:shimmer 3s linear infinite}
+.hero-subtitle{font-size:clamp(1.05rem,1.8vw,1.25rem);color:var(--text-dim);max-width:600px;margin:0 auto 2.5rem;animation:fadeInUp .6s .2s ease backwards}
+.hero-ip{display:inline-flex;align-items:center;gap:10px;padding:14px 28px;border-radius:12px;background:var(--bg-card);border:1px solid var(--border);font-family:"Cascadia Code","Fira Code",monospace;font-size:1.05rem;color:var(--text-bright);cursor:pointer;transition:all .3s;position:relative;animation:fadeInUp .6s .3s ease backwards}
+.hero-ip:hover{border-color:var(--accent);box-shadow:0 0 20px var(--accent-glow)}
+.hero-ip .copy-icon{opacity:.5;transition:opacity .2s;font-size:.85rem}
+.hero-ip:hover .copy-icon{opacity:1}
+.hero-ip .copied-tooltip{position:absolute;top:-36px;left:50%;transform:translateX(-50%);background:var(--accent);color:#000;padding:4px 12px;border-radius:6px;font-size:.75rem;font-weight:700;opacity:0;pointer-events:none;transition:opacity .2s}
+.hero-ip .copied-tooltip.show{opacity:1}
+.hero-btns{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-top:2rem;animation:fadeInUp .6s .35s ease backwards}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:14px 32px;border-radius:12px;font-weight:700;font-size:.95rem;border:none;cursor:pointer;transition:all .3s;text-decoration:none}
+.btn-primary{background:var(--accent);color:#000;box-shadow:0 0 30px var(--accent-glow)}
+.btn-primary:hover{transform:translateY(-3px);box-shadow:0 0 40px var(--accent),0 8px 24px #00000044}
+.btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--text-bright)}
+.btn-outline:hover{border-color:var(--accent);background:#ffffff06;transform:translateY(-2px)}
+.hero-scroll-hint{position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);animation:bounceDown 2s infinite;color:var(--text-dim);font-size:.85rem;display:flex;flex-direction:column;align-items:center;gap:6px}
+.hero-scroll-hint .arrow{font-size:1.2rem}
+
+/* === SECTION === */
+.section{padding:6rem 2rem;position:relative;z-index:1}
+.section-label{text-align:center;font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.15em;color:var(--accent);margin-bottom:.75rem}
+.section-title{text-align:center;font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:900;letter-spacing:-.02em;margin-bottom:1rem;color:var(--text-bright)}
+.section-desc{text-align:center;color:var(--text-dim);max-width:600px;margin:0 auto 4rem;font-size:1.05rem}
+
+/* === KITS GRID === */
+.kits-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1rem;max-width:1100px;margin:0 auto}
+.kit-card{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:1.5rem 1rem;text-align:center;transition:all .35s ease;cursor:default;position:relative;overflow:hidden}
+.kit-card::before{content:"";position:absolute;inset:0;border-radius:14px;opacity:0;transition:opacity .35s;background:radial-gradient(circle at 50% 0%,var(--accent-glow) 0%,transparent 70%)}
+.kit-card:hover{transform:translateY(-6px);border-color:#ffffff15;box-shadow:0 12px 40px #00000044}
+.kit-card:hover::before{opacity:.08}
+.kit-icon{font-size:2rem;margin-bottom:.75rem;display:block;filter:grayscale(.3);transition:filter .3s}
+.kit-card:hover .kit-icon{filter:grayscale(0)}
+.kit-name{font-weight:800;font-size:.95rem;color:var(--text-bright);margin-bottom:.25rem}
+.kit-type{font-size:.75rem;color:var(--text-dim)}
+
+/* === MODES === */
+.modes{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.5rem}
+.mode-card{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:2.5rem 2rem;transition:all .35s;position:relative;overflow:hidden}
+.mode-card::after{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));opacity:0;transition:opacity .35s}
+.mode-card:hover{transform:translateY(-6px);border-color:#ffffff15;box-shadow:0 12px 40px #00000044}
+.mode-card:hover::after{opacity:1}
+.mode-card .mode-icon-wrapper{display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:14px;background:var(--accent-glow);margin-bottom:1.25rem}
+.mode-card .mode-icon{font-size:1.5rem}
+.mode-card h3{font-size:1.25rem;font-weight:800;margin-bottom:.5rem;color:var(--text-bright)}
+.mode-card p{color:var(--text-dim);font-size:.9rem;line-height:1.7}
+.mode-card .mode-features{display:flex;flex-wrap:wrap;gap:8px;margin-top:1.25rem}
+.mode-tag{padding:4px 12px;border-radius:9999px;background:#ffffff08;border:1px solid var(--border);font-size:.75rem;color:var(--text-dim)}
+
+/* === STATS === */
+.stats-bar{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.5rem}
+.stat-card{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:2rem;text-align:center;transition:all .35s}
+.stat-card:hover{border-color:var(--accent);box-shadow:0 0 30px var(--accent-glow)}
+.stat-number{font-size:3rem;font-weight:900;color:var(--accent);line-height:1;margin-bottom:.5rem;font-family:"Cascadia Code","Fira Code",monospace}
+.stat-label{font-size:.85rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.08em}
+
+/* === PLUGINS === */
+.plugins-grid{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.5rem}
+.plugin-card{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:2rem;transition:all .35s}
+.plugin-card:hover{transform:translateY(-4px);border-color:var(--accent);box-shadow:0 8px 30px #00000033}
+.plugin-card .plugin-header{display:flex;align-items:center;gap:12px;margin-bottom:1rem}
+.plugin-card .plugin-dot{width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent-glow)}
+.plugin-card h3{font-size:1.1rem;font-weight:800;color:var(--text-bright)}
+.plugin-card .plugin-version{font-size:.75rem;color:var(--text-dim);padding:2px 8px;border-radius:9999px;background:#ffffff08;border:1px solid var(--border)}
+.plugin-card p{color:var(--text-dim);font-size:.88rem;line-height:1.7}
+.plugin-card .plugin-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:1rem}
+.plugin-tag{padding:4px 10px;border-radius:6px;background:var(--accent-glow);color:var(--accent);font-size:.7rem;font-weight:700}
+
+/* === JOIN === */
+.join-section{text-align:center;position:relative}
+.join-card{max-width:700px;margin:0 auto;background:linear-gradient(135deg,#0f0f1e 0%,#16162a 50%,#0f0f1e 100%);border:1px solid var(--border);border-radius:24px;padding:4rem 3rem;position:relative;overflow:hidden}
+.join-card::before{content:"";position:absolute;inset:0;border-radius:24px;background:radial-gradient(circle at 50% 0%,var(--accent-glow) 0%,transparent 60%);opacity:.05}
+.join-card h2{font-size:2rem;font-weight:900;color:var(--text-bright);margin-bottom:1rem;position:relative}
+.join-card p{color:var(--text-dim);margin-bottom:2rem;position:relative;font-size:1.05rem}
+.join-steps{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;position:relative;margin-bottom:2rem}
+.join-step{flex:1;min-width:180px;max-width:220px;text-align:center;padding:1.5rem 1rem;border-radius:14px;background:var(--bg-card);border:1px solid var(--border)}
+.join-step .step-num{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:var(--accent);color:#000;font-weight:900;font-size:.9rem;margin-bottom:.75rem}
+.join-step h4{font-size:.9rem;font-weight:800;margin-bottom:.35rem;color:var(--text-bright)}
+.join-step p{font-size:.8rem;color:var(--text-dim);margin:0}
+.join-ip-large{display:inline-flex;align-items:center;gap:12px;padding:18px 36px;border-radius:14px;background:var(--bg-card);border:1px solid var(--border);font-family:"Cascadia Code","Fira Code",monospace;font-size:1.2rem;color:var(--text-bright);cursor:pointer;transition:all .3s}
+.join-ip-large:hover{border-color:var(--accent);box-shadow:0 0 24px var(--accent-glow)}
+.join-edition{display:inline-flex;align-items:center;gap:8px;margin-top:1.5rem;padding:8px 16px;border-radius:9999px;background:#ffffff06;font-size:.85rem;color:var(--text-dim)}
+.join-edition .edition-dot{width:7px;height:7px;background:var(--warning);border-radius:50%}
+
+/* === FOOTER === */
+.footer{padding:3rem 2rem;border-top:1px solid var(--border);text-align:center;position:relative;z-index:1}
+.footer-brand{font-size:1.1rem;font-weight:800;color:var(--text-bright);margin-bottom:.5rem}
+.footer-copy{font-size:.8rem;color:var(--text-dim)}
+
+/* === REVEAL ANIMATIONS === */
+.reveal{opacity:0;transform:translateY(30px);transition:all .7s cubic-bezier(.23,1,.32,1)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.reveal-delay-1{transition-delay:.1s}
+.reveal-delay-2{transition-delay:.2s}
+.reveal-delay-3{transition-delay:.3s}
+.reveal-delay-4{transition-delay:.4s}
+
+/* === KEYFRAMES === */
+@keyframes fadeInUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+@keyframes shimmer{0%{background-position:0% 50%}100%{background-position:200% 50%}}
+@keyframes pulse-dot{0%,100%{opacity:1;box-shadow:0 0 0 0 var(--success)}50%{opacity:.6;box-shadow:0 0 0 8px transparent}}
+@keyframes bounceDown{0%,100%{transform:translateX(-50%) translateY(0);opacity:.7}50%{transform:translateX(-50%) translateY(8px);opacity:1}}
+
+/* === RESPONSIVE === */
+@media(max-width:768px){
+  .nav-links{display:none}
+  .mobile-menu-btn{display:block}
+  .hero{padding:5rem 1.25rem 3rem}
+  .hero-ip{font-size:.9rem;padding:12px 20px}
+  .kits-grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}
+  .section{padding:4rem 1.25rem}
+  .join-card{padding:2.5rem 1.5rem}
+  .join-steps{flex-direction:column;align-items:center}
+  .join-step{max-width:100%}
+  .stats-bar{grid-template-columns:repeat(2,1fr)}
+  .modes{grid-template-columns:1fr}
+  .plugins-grid{grid-template-columns:1fr}
+}
+
+/* === MOBILE NAV OVERLAY === */
+.mobile-nav{position:fixed;inset:0;background:#06060dfa;backdrop-filter:blur(20px);z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2rem;opacity:0;pointer-events:none;transition:opacity .35s}
+.mobile-nav.open{opacity:1;pointer-events:auto}
+.mobile-nav a{font-size:1.3rem;font-weight:700;color:var(--text-bright)}
+.mobile-nav .close-btn{position:absolute;top:1.5rem;right:1.5rem;background:none;border:none;color:var(--text-bright);font-size:1.8rem;cursor:pointer}
+
+/* === Tweaks Panel === */
+.tweaks-toggle{position:fixed;bottom:24px;right:24px;z-index:150;width:48px;height:48px;border-radius:50%;background:var(--bg-card);border:1px solid var(--border);color:var(--text-bright);cursor:pointer;font-size:1.3rem;transition:all .3s;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px #00000033}
+.tweaks-toggle:hover{border-color:var(--accent);box-shadow:0 0 20px var(--accent-glow)}
+.tweaks-panel{position:fixed;bottom:84px;right:24px;z-index:150;background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:1.5rem;min-width:240px;opacity:0;pointer-events:none;transform:translateY(12px);transition:all .3s;box-shadow:0 12px 40px #00000055}
+.tweaks-panel.open{opacity:1;pointer-events:auto;transform:translateY(0)}
+.tweaks-panel h4{font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);margin-bottom:1rem}
+.tweak-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem}
+.tweak-row label{font-size:.85rem;color:var(--text)}
+.tweak-row input[type=range]{width:100px;accent-color:var(--accent)}
+
+@media(max-width:768px){
+  .tweaks-toggle{bottom:16px;right:16px;width:40px;height:40px;font-size:1.1rem}
+  .tweaks-panel{bottom:72px;right:16px}
+}
+</style>
+</head>
+<body>
+
+<!-- Particles Background -->
+<canvas id="particles"></canvas>
+
+<!-- Mobile Nav Overlay -->
+<div class="mobile-nav" id="mobileNav">
+  <button class="close-btn" onclick="toggleMobileNav()">✕</button>
+  <a href="#features" onclick="toggleMobileNav()">特色</a>
+  <a href="#modes" onclick="toggleMobileNav()">模式</a>
+  <a href="#plugins" onclick="toggleMobileNav()">插件</a>
+  <a href="#join" onclick="toggleMobileNav()">加入</a>
+</div>
+
+<!-- NAV -->
+<nav class="nav" id="nav">
+  <div class="nav-inner">
+    <a href="#" class="nav-logo">
+      <span class="logo-dot"></span>
+      OrdinaryServer
+    </a>
+    <ul class="nav-links">
+      <li><a href="#features">特色</a></li>
+      <li><a href="#modes">模式</a></li>
+      <li><a href="#plugins">插件</a></li>
+      <li><a href="#join" class="nav-cta">立即加入</a></li>
+    </ul>
+    <button class="mobile-menu-btn" onclick="toggleMobileNav()">☰</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg-glow"></div>
+  <div class="hero-bg-glow2"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <div class="hero-badge">
+      <span class="pulse"></span> PocketMine-MP 5.x · 在线运行中
+    </div>
+    <h1>
+      <span class="gradient-text">OrdinaryServer</span><br>
+      极致 PvP 战斗体验
+    </h1>
+    <p class="hero-subtitle">
+      14种职业 · ELO排位系统 · 自定义战斗机制 · 高性能PMMP 5.x核心
+    </p>
+    <div class="hero-ip" id="heroIp" onclick="copyIP('MC.CNPVP.CLUB', this)">
+      <span>MC.CNPVP.CLUB</span>
+      <span class="copy-icon">📋</span>
+      <span class="copied-tooltip">已复制!</span>
+    </div>
+    <div class="hero-btns">
+      <a href="#join" class="btn btn-primary">
+        开始游戏 🚀
+      </a>
+      <a href="#features" class="btn btn-outline">
+        了解更多 ↓
+      </a>
+    </div>
+  </div>
+  <div class="hero-scroll-hint">
+    <span>向下滚动</span>
+    <span class="arrow">↓</span>
+  </div>
+</section>
+
+<!-- FEATURES — KITS -->
+<section class="section" id="features">
+  <div class="section-label reveal">职业系统</div>
+  <h2 class="section-title reveal reveal-delay-1">14种 PvP 职业</h2>
+  <p class="section-desc reveal reveal-delay-1">从经典PVP到空岛战争，每个职业都经过精心调校，带来独特战斗风格</p>
+  <div class="kits-grid">
+    <div class="kit-card reveal reveal-delay-1"><span class="kit-icon">🥊</span><div class="kit-name">Boxing</div><div class="kit-type">拳击</div></div>
+    <div class="kit-card reveal reveal-delay-1"><span class="kit-icon">🏗️</span><div class="kit-name">BuildUHC</div><div class="kit-type">建筑UHC</div></div>
+    <div class="kit-card reveal reveal-delay-2"><span class="kit-icon">⚔️</span><div class="kit-name">Classic</div><div class="kit-type">经典PVP</div></div>
+    <div class="kit-card reveal reveal-delay-2"><span class="kit-icon">🕊️</span><div class="kit-name">Combofly</div><div class="kit-type">连击飞行</div></div>
+    <div class="kit-card reveal reveal-delay-2"><span class="kit-icon">✊</span><div class="kit-name">Fist</div><div class="kit-type">空手</div></div>
+    <div class="kit-card reveal reveal-delay-2"><span class="kit-icon">🍎</span><div class="kit-name">Gapple</div><div class="kit-type">金苹果</div></div>
+    <div class="kit-card reveal reveal-delay-3"><span class="kit-icon">🧪</span><div class="kit-name">HardPot</div><div class="kit-type">药水</div></div>
+    <div class="kit-card reveal reveal-delay-3"><span class="kit-icon">💥</span><div class="kit-name">Knock</div><div class="kit-type">击退</div></div>
+    <div class="kit-card reveal reveal-delay-3"><span class="kit-icon">🎯</span><div class="kit-name">MidFight</div><div class="kit-type">中场</div></div>
+    <div class="kit-card reveal reveal-delay-3"><span class="kit-icon">⭐</span><div class="kit-name">NoDebuff</div><div class="kit-type">无药水 ★</div></div>
+    <div class="kit-card reveal reveal-delay-4"><span class="kit-icon">🏝️</span><div class="kit-name">SkyWars</div><div class="kit-type">空岛战争</div></div>
+    <div class="kit-card reveal reveal-delay-4"><span class="kit-icon">🤼</span><div class="kit-name">Sumo</div><div class="kit-type">相扑</div></div>
+    <div class="kit-card reveal reveal-delay-4"><span class="kit-icon">🎓</span><div class="kit-name">Training</div><div class="kit-type">训练</div></div>
+    <div class="kit-card reveal reveal-delay-4"><span class="kit-icon">⚡</span><div class="kit-name">speed2test</div><div class="kit-type">速度测试</div></div>
+  </div>
+</section>
+
+<!-- MODES -->
+<section class="section" id="modes" style="background:var(--bg-secondary)">
+  <div class="section-label reveal">游戏模式</div>
+  <h2 class="section-title reveal reveal-delay-1">多元战斗模式</h2>
+  <p class="section-desc reveal reveal-delay-1">排位冲分、自由练习、大乱斗 — 总有适合你的战场</p>
+  <div class="modes">
+    <div class="mode-card reveal reveal-delay-1">
+      <div class="mode-icon-wrapper"><span class="mode-icon">🏆</span></div>
+      <h3>排位决斗</h3>
+      <p>ELO科学算法排名系统，起始1000分，无上限。冷门胜利获得额外加分，低于1000分享有保护机制。冲上排行榜，成为最强战士。</p>
+      <div class="mode-features">
+        <span class="mode-tag">ELO系统</span>
+        <span class="mode-tag">赛季排名</span>
+        <span class="mode-tag">段位称号</span>
+      </div>
+    </div>
+    <div class="mode-card reveal reveal-delay-2">
+      <div class="mode-icon-wrapper"><span class="mode-icon">🎮</span></div>
+      <h3>非排位决斗</h3>
+      <p>无压力的练习场。自由选择职业与对手切磋，不计ELO分。适合测试新套路、热身或单纯享受战斗乐趣。</p>
+      <div class="mode-features">
+        <span class="mode-tag">无压力</span>
+        <span class="mode-tag">自由选职</span>
+        <span class="mode-tag">随时退出</span>
+      </div>
+    </div>
+    <div class="mode-card reveal reveal-delay-3">
+      <div class="mode-icon-wrapper"><span class="mode-icon">🔥</span></div>
+      <h3>FFA 自由混战</h3>
+      <p>多人大乱斗模式，所有人互相为敌。不限职业，击杀越多排名越前。纯靠个人实力生存的终极战场。</p>
+      <div class="mode-features">
+        <span class="mode-tag">多人混战</span>
+        <span class="mode-tag">击杀统计</span>
+        <span class="mode-tag">即时加入</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<section class="section">
+  <div class="section-label reveal">数据概览</div>
+  <h2 class="section-title reveal reveal-delay-1">服务器技术参数</h2>
+  <div class="stats-bar">
+    <div class="stat-card reveal reveal-delay-1">
+      <div class="stat-number">14</div>
+      <div class="stat-label">PvP 职业</div>
+    </div>
+    <div class="stat-card reveal reveal-delay-2">
+      <div class="stat-number">50+</div>
+      <div class="stat-label">独立世界</div>
+    </div>
+    <div class="stat-card reveal reveal-delay-3">
+      <div class="stat-number">5.x</div>
+      <div class="stat-label">PMMP 核心</div>
+    </div>
+    <div class="stat-card reveal reveal-delay-4">
+      <div class="stat-number">99.9%</div>
+      <div class="stat-label">运行稳定性</div>
+    </div>
+  </div>
+</section>
+
+<!-- PLUGINS -->
+<section class="section" id="plugins" style="background:var(--bg-secondary)">
+  <div class="section-label reveal">自研插件</div>
+  <h2 class="section-title reveal reveal-delay-1">定制战斗系统</h2>
+  <p class="section-desc reveal reveal-delay-1">全部插件均为自研，针对PvP场景深度优化</p>
+  <div class="plugins-grid">
+    <div class="plugin-card reveal reveal-delay-1">
+      <div class="plugin-header">
+        <span class="plugin-dot"></span>
+        <h3>ArrowFeel</h3>
+        <span class="plugin-version">v1.1.0</span>
+      </div>
+      <p>弓箭战斗增强系统。支持短拉瞬发、自定义箭矢速度/重力/伤害/击退倍率，绕过PMMP射击免疫机制，箭矢命中自动返还。</p>
+      <div class="plugin-tags">
+        <span class="plugin-tag">弓箭</span>
+        <span class="plugin-tag">BowBoost</span>
+        <span class="plugin-tag">击退补偿</span>
+      </div>
+    </div>
+    <div class="plugin-card reveal reveal-delay-2">
+      <div class="plugin-header">
+        <span class="plugin-dot"></span>
+        <h3>ConnectCheck</h3>
+        <span class="plugin-version">v1.0.0</span>
+      </div>
+      <p>进服Ping检测系统。自动3次采样评估连接质量（Excellent→Very Poor），彩色消息反馈，后台记录玩家连接日志。</p>
+      <div class="plugin-tags">
+        <span class="plugin-tag">Ping</span>
+        <span class="plugin-tag">连接质量</span>
+        <span class="plugin-tag">自动采样</span>
+      </div>
+    </div>
+    <div class="plugin-card reveal reveal-delay-3">
+      <div class="plugin-header">
+        <span class="plugin-dot"></span>
+        <h3>Ordinary Core</h3>
+        <span class="plugin-version">260530</span>
+      </div>
+      <p>核心战斗引擎。Duel排位/非排位系统、14种职业管理、组队系统、ELO排名算法、FFA混战、计分板、大厅物品栏。</p>
+      <div class="plugin-tags">
+        <span class="plugin-tag">核心</span>
+        <span class="plugin-tag">ELO</span>
+        <span class="plugin-tag">决斗</span>
+        <span class="plugin-tag">组队</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- JOIN -->
+<section class="section join-section" id="join">
+  <div class="section-label reveal">开始战斗</div>
+  <h2 class="section-title reveal reveal-delay-1">三步加入服务器</h2>
+  <p class="section-desc reveal reveal-delay-1">支持原版Minecraft Bedrock客户端直连</p>
+  <div class="join-card reveal reveal-delay-2">
+    <h2>立即加入 OrdinaryServer</h2>
+    <p>打开Minecraft基岩版，按照以下步骤进入服务器</p>
+    <div class="join-steps">
+      <div class="join-step">
+        <div class="step-num">1</div>
+        <h4>启动游戏</h4>
+        <p>打开 Minecraft Bedrock Edition</p>
+      </div>
+      <div class="join-step">
+        <div class="step-num">2</div>
+        <h4>添加服务器</h4>
+        <p>进入"服务器"→"添加服务器"</p>
+      </div>
+      <div class="join-step">
+        <div class="step-num">3</div>
+        <h4>输入地址</h4>
+        <p>填写下方服务器地址并加入</p>
+      </div>
+    </div>
+    <div class="join-ip-large" onclick="copyIP('MC.CNPVP.CLUB', this)">
+      <span>MC.CNPVP.CLUB</span>
+      <span style="opacity:.5;font-size:.9rem">📋 点击复制</span>
+    </div>
+    <div class="join-edition">
+      <span class="edition-dot"></span>
+      端口: 19132 (UDP) · Minecraft Bedrock Edition
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-brand">OrdinaryServer</div>
+  <div class="footer-copy">
+    MC.CNPVP.CLUB · PocketMine-MP 5.x · Made with ❤️ by Pozac &amp; Codex
+  </div>
+</footer>
+
+<!-- Tweaks Panel -->
+<button class="tweaks-toggle" id="tweaksToggle" onclick="toggleTweaks()" title="Tweaks">⚙</button>
+<div class="tweaks-panel" id="tweaksPanel">
+  <h4>Tweaks</h4>
+  <div class="tweak-row">
+    <label>粒子密度</label>
+    <input type="range" min="20" max="120" value="60" id="particleDensity" oninput="updateParticles()">
+  </div>
+  <div class="tweak-row">
+    <label>动画速度</label>
+    <input type="range" min="0.5" max="2" step="0.1" value="1" id="animSpeed" oninput="updateAnimSpeed()">
+  </div>
+  <div class="tweak-row">
+    <label>网格可见</label>
+    <input type="checkbox" checked id="gridVisible" onchange="toggleGrid()">
+  </div>
+</div>
+
+<script>
+/* === PARTICLES === */
+const canvas = document.getElementById('particles');
+const ctx = canvas.getContext('2d');
+let particles = [];
+let particleCount = 60;
+let mouseX = -1000, mouseY = -1000;
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+class Particle {
+  constructor() {
+    this.reset();
+    this.y = Math.random() * canvas.height;
+  }
+  reset() {
+    this.x = Math.random() * canvas.width;
+    this.y = -10;
+    this.size = Math.random() * 2 + 0.5;
+    this.speedY = Math.random() * 0.5 + 0.2;
+    this.speedX = (Math.random() - 0.5) * 0.3;
+    this.opacity = Math.random() * 0.5 + 0.15;
+    this.pulseSpeed = Math.random() * 0.02 + 0.005;
+    this.pulseOffset = Math.random() * Math.PI * 2;
+  }
+  update() {
+    this.y += this.speedY;
+    this.x += this.speedX + (mouseX - canvas.width/2) * 0.00005;
+    if (this.y > canvas.height + 10) this.reset();
+    if (this.x < -10) this.x = canvas.width + 10;
+    if (this.x > canvas.width + 10) this.x = -10;
+  }
+  draw(ctx, t) {
+    const pulse = Math.sin(t * this.pulseSpeed + this.pulseOffset) * 0.3 + 0.7;
+    ctx.fillStyle = `rgba(0,212,255,${this.opacity * pulse})`;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function createParticles() {
+  particles = [];
+  for (let i = 0; i < particleCount; i++) {
+    particles.push(new Particle());
+  }
+}
+createParticles();
+
+let animT = 0;
+function animate(timestamp) {
+  animT = timestamp;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  // Connection lines
+  ctx.strokeStyle = 'rgba(0,212,255,0.04)';
+  ctx.lineWidth = 0.5;
+  for (let i = 0; i < particles.length; i++) {
+    for (let j = i + 1; j < particles.length; j++) {
+      const dx = particles[i].x - particles[j].x;
+      const dy = particles[i].y - particles[j].y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 120) {
+        ctx.beginPath();
+        ctx.moveTo(particles[i].x, particles[i].y);
+        ctx.lineTo(particles[j].x, particles[j].y);
+        ctx.stroke();
+      }
+    }
+  }
+  
+  particles.forEach(p => { p.update(); p.draw(ctx, animT); });
+  requestAnimationFrame(animate);
+}
+requestAnimationFrame(animate);
+
+document.addEventListener('mousemove', e => {
+  mouseX = e.clientX;
+  mouseY = e.clientY;
+});
+
+function updateParticles() {
+  const slider = document.getElementById('particleDensity');
+  particleCount = parseInt(slider.value);
+  createParticles();
+}
+
+/* === SCROLL REVEAL === */
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.15, rootMargin: '0px 0px -50px 0px' });
+
+document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+/* === NAV SCROLL === */
+const nav = document.getElementById('nav');
+window.addEventListener('scroll', () => {
+  nav.classList.toggle('scrolled', window.scrollY > 50);
+});
+
+/* === COPY IP === */
+function copyIP(ip, el) {
+  navigator.clipboard.writeText(ip).then(() => {
+    const tooltip = el.querySelector('.copied-tooltip');
+    if (tooltip) { tooltip.classList.add('show'); setTimeout(() => tooltip.classList.remove('show'), 1500); }
+  }).catch(() => {});
+}
+
+/* === MOBILE NAV === */
+function toggleMobileNav() {
+  document.getElementById('mobileNav').classList.toggle('open');
+}
+
+/* === TWEENS === */
+function toggleTweaks() {
+  document.getElementById('tweaksPanel').classList.toggle('open');
+}
+function toggleGrid() {
+  document.querySelector('.hero-grid').style.display = document.getElementById('gridVisible').checked ? '' : 'none';
+}
+function updateAnimSpeed() {
+  const v = document.getElementById('animSpeed').value;
+  document.documentElement.style.setProperty('--anim-speed', v);
+  document.querySelectorAll('.kit-card, .mode-card, .plugin-card').forEach(el => {
+    el.style.transitionDuration = `${0.35 / v}s`;
+  });
+}
+
+/* === SMOOTH SCROLL FOR SAFARI === */
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+  anchor.addEventListener('click', function(e) {
+    e.preventDefault();
+    const target = document.querySelector(this.getAttribute('href'));
+    if (target) target.scrollIntoView({ behavior: 'smooth' });
+  });
+});
+
+/* === INIT === */
+// Trigger initial reveals for elements already in view
+setTimeout(() => {
+  document.querySelectorAll('.reveal').forEach(el => {
+    const rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight) el.classList.add('visible');
+  });
+}, 100);
+</script>
+</body>
+</html>
